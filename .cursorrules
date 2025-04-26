@@ -1,0 +1,46 @@
+// PROJECT CONTEXT
+This is a Next.js application created using "npx create-next-app@latest" with React, TypeScript, Tailwind CSS, and ESLint.
+The application will be deployed on Vercel.
+
+// TECH STACK REQUIREMENTS
+- Use Node.js v23.x
+- Use React 19 and Next.js App Router
+- Use TypeScript for all code
+- Use Tailwind CSS for styling
+- Create Jest tests for all API endpoints and components
+- Use shadcn/ui for UI components when possible
+- Implement responsive designs for all screen sizes
+
+// CODE STYLE & PATTERNS
+- Follow functional programming patterns
+- Use TypeScript interfaces over types
+- Use named exports for components
+- Avoid classes; use hooks for state management
+- Write concise, modular code with clear comments
+- Prefer async/await over promises
+- Use descriptive variable names with proper auxiliary verbs (e.g., isLoading, hasError)
+
+// FILE STRUCTURE
+- Group files by feature when possible
+- For components, use the pattern: [ComponentName]/index.tsx and [ComponentName]/[ComponentName].test.tsx
+- Place API routes in app/api/[route]/route.ts
+- Store reusable hooks in lib/hooks/
+- Store types in lib/types.ts
+
+// TESTING
+- Write Jest tests for all components and API routes
+- Aim for 80%+ test coverage
+- Test API routes with proper mocking
+- Test components with React Testing Library
+
+// PERFORMANCE & OPTIMIZATION
+- Use proper image optimization with Next.js Image component
+- Implement code splitting and lazy loading for non-critical resources
+- Prioritize Core Web Vitals metrics
+- Use Server Components when appropriate
+
+// DEPLOYMENT
+- Optimize for Vercel deployment
+- Implement proper error handling and logging
+- Set up build caching correctly
+- Use environment variables for configuration

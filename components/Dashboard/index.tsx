@@ -2,21 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { WidgetLayout, WidgetType } from '@/lib/types';
-import { TodoWidget } from '@/components/Widgets/TodoWidget';
+import { TasksWidget } from '@/components/Widgets/TasksWidget';
 import { WeatherWidget } from '@/components/Widgets/WeatherWidget';
 import { NewsWidget } from '@/components/Widgets/NewsWidget';
 import { QuoteWidget } from '@/components/Widgets/QuoteWidget';
 
-// Responsive grid configuration
-const gridConfig = {
-  cols: { xs: 1, sm: 2, md: 3, lg: 4 },
-  rowHeight: 150,
-  margin: [10, 10],
-};
-
 export function Dashboard() {
   const [layouts, setLayouts] = useState<WidgetLayout[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
 
   // Load saved layouts from localStorage on component mount
   useEffect(() => {
@@ -30,7 +22,7 @@ export function Dashboard() {
     } else {
       // Default layout if none saved
       setLayouts([
-        { id: 'todo-widget', type: 'todo', position: { x: 0, y: 0 }, size: { width: 1, height: 2 } },
+        { id: 'tasks-widget', type: 'todo', position: { x: 0, y: 0 }, size: { width: 1, height: 2 } },
         { id: 'weather-widget', type: 'weather', position: { x: 1, y: 0 }, size: { width: 1, height: 1 } },
         { id: 'quote-widget', type: 'quote', position: { x: 1, y: 1 }, size: { width: 1, height: 1 } },
         { id: 'news-widget', type: 'news', position: { x: 0, y: 2 }, size: { width: 2, height: 2 } },
@@ -45,11 +37,13 @@ export function Dashboard() {
     }
   }, [layouts]);
 
-  const handleLayoutChange = (newLayouts: WidgetLayout[]) => {
-    setLayouts(newLayouts);
-  };
-
   const handleAddWidget = (type: WidgetType) => {
+    // For Tasks widget type, check if one already exists
+    if (type === 'todo' && layouts.some(widget => widget.type === 'todo')) {
+      // Don't add another Tasks widget if one already exists
+      return;
+    }
+    
     const newWidget: WidgetLayout = {
       id: `${type}-${Date.now()}`,
       type,
@@ -63,6 +57,9 @@ export function Dashboard() {
     setLayouts(layouts.filter(widget => widget.id !== id));
   };
 
+  // Check if there's already a Tasks widget
+  const hasTasksWidget = layouts.some(widget => widget.type === 'todo');
+
   // Render widget based on type
   const renderWidget = (widget: WidgetLayout) => {
     const props = {
@@ -73,7 +70,7 @@ export function Dashboard() {
 
     switch (widget.type) {
       case 'todo':
-        return <TodoWidget {...props} />;
+        return <TasksWidget {...props} />;
       case 'weather':
         return <WeatherWidget {...props} />;
       case 'news':
@@ -92,9 +89,13 @@ export function Dashboard() {
         <div className="flex space-x-2">
           <button 
             onClick={() => handleAddWidget('todo')}
-            className="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className={`px-3 py-2 ${hasTasksWidget 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-500 hover:bg-blue-600'} text-white rounded`}
+            disabled={hasTasksWidget}
+            title={hasTasksWidget ? "Only one Tasks widget allowed" : "Add Tasks widget"}
           >
-            Add Todo
+            Add Tasks
           </button>
           <button 
             onClick={() => handleAddWidget('weather')}

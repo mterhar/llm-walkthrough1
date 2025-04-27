@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { TodoItem } from '@/lib/types';
+import { TaskItem } from '@/lib/types';
 
 // Mock data - in a real app this would be in a database
-let tasks: TodoItem[] = [
+let tasks: TaskItem[] = [
   { id: '1', text: 'Learn Next.js', completed: false, priority: 'high' },
   { id: '2', text: 'Build a Tasks App', completed: false, priority: 'medium', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] },
   { id: '3', text: 'Deploy to Vercel', completed: false, priority: 'low', dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0] },
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Create new task
-    const newTask: TodoItem = {
+    const newTask: TaskItem = {
       id: Date.now().toString(),
       text: body.text,
       completed: false,

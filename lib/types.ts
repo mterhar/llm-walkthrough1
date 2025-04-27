@@ -47,7 +47,7 @@ export interface WidgetProps {
   onResize?: (size: { width: number; height: number }) => void;
 }
 
-// Todo widget types
+// Task widget types (formerly Todo widget types)
 export interface TodoItem {
   id: string;
   text: string;
@@ -56,6 +56,9 @@ export interface TodoItem {
   priority?: 'low' | 'medium' | 'high';
   userId?: string;
 }
+
+// Alias for backward compatibility
+export type TaskItem = TodoItem;
 
 // Weather widget types
 export interface WeatherData {

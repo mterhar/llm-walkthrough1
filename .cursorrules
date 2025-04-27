@@ -8,7 +8,6 @@ The application will be deployed on Vercel.
 - Use TypeScript for all code
 - Use Tailwind CSS for styling
 - Create Jest tests for all API endpoints and components
-- Use shadcn/ui for UI components when possible
 - Implement responsive designs for all screen sizes
 
 // CODE STYLE & PATTERNS

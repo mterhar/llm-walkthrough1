@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { TodoWidget } from '.';
 
@@ -8,7 +8,7 @@ global.fetch = jest.fn();
 const mockFetch = global.fetch as jest.Mock;
 
 // Helper function to set up mockFetch response
-function mockFetchResponse(status: number, data: any) {
+function mockFetchResponse(status: number, data: Record<string, unknown>) {
   mockFetch.mockResolvedValueOnce({
     json: jest.fn().mockResolvedValueOnce(data),
     status
@@ -30,7 +30,9 @@ describe('TodoWidget', () => {
   });
 
   it('renders the widget with title', async () => {
-    render(<TodoWidget id="todo-1" />);
+    await act(async () => {
+      render(<TodoWidget id="todo-1" />);
+    });
     
     expect(screen.getByText('Tasks')).toBeInTheDocument();
     
@@ -47,7 +49,9 @@ describe('TodoWidget', () => {
       data: { id: '3', text: 'New todo', completed: false, priority: 'medium' }
     });
 
-    render(<TodoWidget id="todo-1" />);
+    await act(async () => {
+      render(<TodoWidget id="todo-1" />);
+    });
     
     // Wait for initial todos to load
     await waitFor(() => {
@@ -55,12 +59,16 @@ describe('TodoWidget', () => {
     });
     
     // Type in new todo
-    const input = screen.getByPlaceholderText('Add a new task...');
-    fireEvent.change(input, { target: { value: 'New todo' } });
+    await act(async () => {
+      const input = screen.getByPlaceholderText('Add a new task...');
+      fireEvent.change(input, { target: { value: 'New todo' } });
+    });
     
     // Click add button
-    const addButton = screen.getByText('Add Task');
-    fireEvent.click(addButton);
+    await act(async () => {
+      const addButton = screen.getByText('Add Task');
+      fireEvent.click(addButton);
+    });
     
     // Verify fetch was called with correct parameters
     await waitFor(() => {
@@ -86,7 +94,9 @@ describe('TodoWidget', () => {
       data: { id: '1', text: 'Test todo 1', completed: true, priority: 'high' }
     });
 
-    render(<TodoWidget id="todo-1" />);
+    await act(async () => {
+      render(<TodoWidget id="todo-1" />);
+    });
     
     // Wait for todos to load
     await waitFor(() => {
@@ -94,8 +104,10 @@ describe('TodoWidget', () => {
     });
     
     // Find and click the checkbox for the first todo
-    const checkboxes = screen.getAllByRole('checkbox');
-    fireEvent.click(checkboxes[0]);
+    await act(async () => {
+      const checkboxes = screen.getAllByRole('checkbox');
+      fireEvent.click(checkboxes[0]);
+    });
     
     // Verify fetch was called correctly
     await waitFor(() => {
@@ -116,7 +128,9 @@ describe('TodoWidget', () => {
     // Mock the DELETE request
     mockFetchResponse(204, {});
 
-    render(<TodoWidget id="todo-1" />);
+    await act(async () => {
+      render(<TodoWidget id="todo-1" />);
+    });
     
     // Wait for todos to load
     await waitFor(() => {
@@ -124,8 +138,10 @@ describe('TodoWidget', () => {
     });
     
     // Find and click delete button for the first todo
-    const deleteButtons = screen.getAllByText('', { selector: 'button svg' });
-    fireEvent.click(deleteButtons[0]);
+    await act(async () => {
+      const deleteButtons = screen.getAllByText('', { selector: 'button svg' });
+      fireEvent.click(deleteButtons[0]);
+    });
     
     // Verify fetch was called correctly
     await waitFor(() => {
@@ -148,7 +164,9 @@ describe('TodoWidget', () => {
       data: []
     });
 
-    render(<TodoWidget id="todo-1" />);
+    await act(async () => {
+      render(<TodoWidget id="todo-1" />);
+    });
     
     // Should show the empty state
     await waitFor(() => {
@@ -156,13 +174,17 @@ describe('TodoWidget', () => {
     });
   });
 
-  it('calls onClose when close button is clicked', () => {
+  it('calls onClose when close button is clicked', async () => {
     const onCloseMock = jest.fn();
     
-    render(<TodoWidget id="todo-1" onClose={onCloseMock} />);
+    await act(async () => {
+      render(<TodoWidget id="todo-1" onClose={onCloseMock} />);
+    });
     
-    const closeButton = screen.getByRole('button', { name: '' });
-    fireEvent.click(closeButton);
+    await act(async () => {
+      const closeButton = screen.getByTestId('close-button');
+      fireEvent.click(closeButton);
+    });
     
     expect(onCloseMock).toHaveBeenCalledTimes(1);
   });

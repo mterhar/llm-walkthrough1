@@ -63,20 +63,19 @@ export function Dashboard() {
   // Render widget based on type
   const renderWidget = (widget: WidgetLayout) => {
     const props = {
-      key: widget.id,
       id: widget.id,
       onClose: () => handleRemoveWidget(widget.id),
     };
 
     switch (widget.type) {
       case 'todo':
-        return <TasksWidget {...props} />;
+        return <TasksWidget key={widget.id} {...props} />;
       case 'weather':
-        return <WeatherWidget {...props} />;
+        return <WeatherWidget key={widget.id} {...props} />;
       case 'news':
-        return <NewsWidget {...props} />;
+        return <NewsWidget key={widget.id} {...props} />;
       case 'quote':
-        return <QuoteWidget {...props} />;
+        return <QuoteWidget key={widget.id} {...props} />;
       default:
         return null;
     }

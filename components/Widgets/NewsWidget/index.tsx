@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { NewsArticle, WidgetProps } from '@/lib/types';
 
-export function NewsWidget({ id, onClose }: WidgetProps) {
+export function NewsWidget({ onClose }: WidgetProps) {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [category, setCategory] = useState('technology');
   const [savedArticles, setSavedArticles] = useState<NewsArticle[]>([]);
   const [viewSaved, setViewSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Fetch news on component mount and when category changes
   useEffect(() => {
@@ -29,62 +31,42 @@ export function NewsWidget({ id, onClose }: WidgetProps) {
     }
   }, []);
 
-  const fetchNews = (category: string) => {
+  const fetchNews = async (selectedCategory: string) => {
     setIsLoading(true);
+    setError(null);
     
-    // Mock API call - in a real app, we would fetch from a news API
-    setTimeout(() => {
-      const mockArticles: NewsArticle[] = [
-        {
-          id: '1',
-          title: 'New React 19 Features Developers Are Excited About',
-          source: 'Tech Daily',
-          url: '#',
-          publishedAt: new Date().toISOString(),
-          imageUrl: 'https://via.placeholder.com/300x200',
-          summary: 'React 19 introduces several new features that improve performance and developer experience.'
-        },
-        {
-          id: '2',
-          title: 'The Future of Web Development in 2024',
-          source: 'Web Trends',
-          url: '#',
-          publishedAt: new Date(Date.now() - 86400000).toISOString(),
-          imageUrl: 'https://via.placeholder.com/300x200',
-          summary: 'Explore the latest trends and technologies shaping the future of web development.'
-        },
-        {
-          id: '3',
-          title: 'TypeScript 5.5 Released With New Features',
-          source: 'Dev News',
-          url: '#',
-          publishedAt: new Date(Date.now() - 172800000).toISOString(),
-          imageUrl: 'https://via.placeholder.com/300x200',
-          summary: 'TypeScript 5.5 brings new type-checking features and performance improvements.'
-        },
-        {
-          id: '4',
-          title: 'Building Responsive Dashboards With Tailwind CSS',
-          source: 'UI Weekly',
-          url: '#',
-          publishedAt: new Date(Date.now() - 259200000).toISOString(),
-          imageUrl: 'https://via.placeholder.com/300x200',
-          summary: 'Learn how to create beautiful, responsive dashboards using Tailwind CSS.'
-        },
-        {
-          id: '5',
-          title: 'Next.js 15 Announced With Focus on Performance',
-          source: 'Framework Times',
-          url: '#',
-          publishedAt: new Date(Date.now() - 345600000).toISOString(),
-          imageUrl: 'https://via.placeholder.com/300x200',
-          summary: 'Vercel announces Next.js 15 with significant performance improvements and new features.'
-        },
-      ];
+    try {
+      // Map our UI categories to NYT sections
+      let nytSection = selectedCategory;
+      if (selectedCategory === 'science') {
+        nytSection = 'science';
+      } else if (selectedCategory === 'business') {
+        nytSection = 'business';
+      } else {
+        nytSection = 'technology';
+      }
       
-      setArticles(mockArticles);
+      // Fetch from our API route
+      const response = await fetch(`/api/news?section=${nytSection}`);
+      
+      if (!response.ok) {
+        throw new Error(`Error fetching news: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      setArticles(data.articles || []);
+    } catch (error) {
+      console.error('Failed to fetch news:', error);
+      setError('Failed to load news articles');
+      setArticles([]);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleSaveArticle = (article: NewsArticle) => {
@@ -102,12 +84,16 @@ export function NewsWidget({ id, onClose }: WidgetProps) {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
-    }).format(date);
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      }).format(date);
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -163,6 +149,10 @@ export function NewsWidget({ id, onClose }: WidgetProps) {
         <div className="flex justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
         </div>
+      ) : error ? (
+        <div className="text-center py-8 text-red-500">
+          {error}
+        </div>
       ) : (
         <div className="overflow-y-auto flex-grow">
           {viewSaved ? (
@@ -171,11 +161,15 @@ export function NewsWidget({ id, onClose }: WidgetProps) {
                 {savedArticles.map(article => (
                   <li key={article.id} className="border border-gray-200 rounded overflow-hidden">
                     {article.imageUrl && (
-                      <img 
-                        src={article.imageUrl}
-                        alt={article.title}
-                        className="w-full h-40 object-cover"
-                      />
+                      <div className="relative w-full h-40">
+                        <Image 
+                          src={article.imageUrl}
+                          alt={article.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 300px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
                     )}
                     <div className="p-3">
                       <h3 className="font-semibold">{article.title}</h3>
@@ -215,12 +209,20 @@ export function NewsWidget({ id, onClose }: WidgetProps) {
             <ul className="space-y-4">
               {articles.map(article => (
                 <li key={article.id} className="border border-gray-200 rounded overflow-hidden">
-                  {article.imageUrl && (
-                    <img 
-                      src={article.imageUrl}
-                      alt={article.title}
-                      className="w-full h-40 object-cover"
-                    />
+                  {article.imageUrl ? (
+                    <div className="relative w-full h-40">
+                      <Image 
+                        src={article.imageUrl}
+                        alt={article.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 300px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-40 bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500">No image available</span>
+                    </div>
                   )}
                   <div className="p-3">
                     <h3 className="font-semibold">{article.title}</h3>

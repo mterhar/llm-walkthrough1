@@ -1,147 +1,176 @@
-import { NextRequest } from 'next/server';
 import { GET, POST, DELETE, PATCH } from './route';
-
-// Mock NextResponse
-jest.mock('next/server', () => {
-  return {
-    NextRequest: jest.fn().mockImplementation((url) => {
-      return {
-        url,
-        json: jest.fn().mockResolvedValue({})
-      };
-    }),
-    NextResponse: {
-      json: jest.fn().mockImplementation((body, options) => {
-        return { body, options };
-      })
-    }
-  };
-});
+import { NextRequest, NextResponse } from 'next/server';
 
 describe('Todos API', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
   
-  describe('GET', () => {
-    test('returns all todos when no userId is provided', async () => {
-      // Create mock request
-      const req = new NextRequest('http://localhost:3000/api/todos');
-      
-      // Call the API handler
-      const response = await GET(req);
-      
-      // Check the response
-      expect(response.body.data.length).toBe(3);
-      expect(response.body.status).toBe(200);
+  // Create a mock NextRequest
+  const createRequest = (method: string, body: any = null, searchParams: Record<string, string> = {}) => {
+    const url = new URL('https://example.com/api/todos');
+    
+    // Add search params if provided
+    Object.entries(searchParams).forEach(([key, value]) => {
+      url.searchParams.append(key, value);
     });
     
-    test('filters todos by userId when provided', async () => {
-      // Update some test data with a userId
-      const req = new NextRequest('http://localhost:3000/api/todos?userId=user1');
+    const request = {
+      method,
+      url: url.toString(),
+      json: jest.fn().mockResolvedValue(body)
+    } as unknown as NextRequest;
+    
+    return request;
+  };
+
+  describe('GET /api/todos', () => {
+    it('should return all todos', async () => {
+      const request = createRequest('GET');
+      const response = await GET(request);
+      const data = await response.json();
       
-      // Call the API handler
-      const response = await GET(req);
-      
-      // Since our mock data doesn't have userId matching 'user1', should be empty
-      expect(response.body.data.length).toBe(0);
-    });
-  });
-  
-  describe('POST', () => {
-    test('creates a new todo with valid data', async () => {
-      // Create mock request with JSON data
-      const req = {
-        url: 'http://localhost:3000/api/todos',
-        json: jest.fn().mockResolvedValue({ text: 'New Todo Item' })
-      };
-      
-      // Call the API handler
-      const response = await POST(req as unknown as NextRequest);
-      
-      // Check the response
-      expect(response.body.data.text).toBe('New Todo Item');
-      expect(response.body.data.completed).toBe(false);
-      expect(response.body.status).toBe(201);
+      expect(response.status).toBe(200);
+      expect(data.status).toBe(200);
+      expect(Array.isArray(data.data)).toBe(true);
+      expect(data.data.length).toBeGreaterThan(0);
     });
     
-    test('returns error with invalid data', async () => {
-      // Create mock request with invalid data
-      const req = {
-        url: 'http://localhost:3000/api/todos',
-        json: jest.fn().mockResolvedValue({}) // Missing 'text' field
-      };
+    it('should filter todos by userId', async () => {
+      // First, create a todo with a specific userId
+      const postRequest = createRequest('POST', { 
+        text: 'User-specific todo', 
+        userId: 'user123' 
+      });
       
-      // Call the API handler
-      const response = await POST(req as unknown as NextRequest);
+      await POST(postRequest);
       
-      // Check the response
-      expect(response.body.error).toBe('Text is required and must be a string');
-      expect(response.body.status).toBe(400);
-      expect(response.options.status).toBe(400);
+      // Then try to fetch todos with that userId
+      const getRequest = createRequest('GET', null, { userId: 'user123' });
+      const response = await GET(getRequest);
+      const data = await response.json();
+      
+      expect(response.status).toBe(200);
+      expect(data.data.every((todo: any) => todo.userId === 'user123')).toBe(true);
     });
   });
-  
-  describe('DELETE', () => {
-    test('deletes a todo with valid ID', async () => {
-      // Create mock request with ID param
-      const req = new NextRequest('http://localhost:3000/api/todos?id=1');
+
+  describe('POST /api/todos', () => {
+    it('should create a new todo', async () => {
+      const request = createRequest('POST', { 
+        text: 'Test todo',
+        priority: 'high',
+        dueDate: '2023-12-31'
+      });
       
-      // Call the API handler
-      const response = await DELETE(req);
+      const response = await POST(request);
+      const data = await response.json();
       
-      // Check the response
-      expect(response.body.status).toBe(204);
-      expect(response.options.status).toBe(204);
+      expect(response.status).toBe(201);
+      expect(data.status).toBe(201);
+      expect(data.data.text).toBe('Test todo');
+      expect(data.data.priority).toBe('high');
+      expect(data.data.dueDate).toBe('2023-12-31');
+      expect(data.data.completed).toBe(false);
+      expect(data.data.id).toBeDefined();
     });
     
-    test('returns error when no ID is provided', async () => {
-      // Create mock request without ID
-      const req = new NextRequest('http://localhost:3000/api/todos');
+    it('should return 400 if text is missing', async () => {
+      const request = createRequest('POST', {});
       
-      // Call the API handler
-      const response = await DELETE(req);
+      const response = await POST(request);
+      const data = await response.json();
       
-      // Check the response
-      expect(response.body.error).toBe('Todo ID is required');
-      expect(response.body.status).toBe(400);
+      expect(response.status).toBe(400);
+      expect(data.status).toBe(400);
+      expect(data.error).toBeDefined();
     });
   });
-  
-  describe('PATCH', () => {
-    test('updates a todo with valid data', async () => {
-      // First create a mock request to update a todo with ID 2
-      const req = {
-        url: 'http://localhost:3000/api/todos',
-        json: jest.fn().mockResolvedValue({ 
-          id: '2', 
-          text: 'Updated Todo Text',
-          completed: true
-        })
-      };
+
+  describe('PATCH /api/todos', () => {
+    it('should update an existing todo', async () => {
+      // First create a todo
+      const postRequest = createRequest('POST', { text: 'Todo to update' });
+      const postResponse = await POST(postRequest);
+      const postData = await postResponse.json();
+      const todoId = postData.data.id;
       
-      // Call the API handler
-      const response = await PATCH(req as unknown as NextRequest);
+      // Then update it
+      const patchRequest = createRequest('PATCH', { 
+        id: todoId,
+        text: 'Updated todo',
+        completed: true,
+        priority: 'low'
+      });
       
-      // Check the response
-      expect(response.body.data.text).toBe('Updated Todo Text');
-      expect(response.body.data.completed).toBe(true);
-      expect(response.body.status).toBe(200);
+      const patchResponse = await PATCH(patchRequest);
+      const patchData = await patchResponse.json();
+      
+      expect(patchResponse.status).toBe(200);
+      expect(patchData.data.id).toBe(todoId);
+      expect(patchData.data.text).toBe('Updated todo');
+      expect(patchData.data.completed).toBe(true);
+      expect(patchData.data.priority).toBe('low');
     });
     
-    test('returns error when ID is not found', async () => {
-      // Create mock request with non-existent ID
-      const req = {
-        url: 'http://localhost:3000/api/todos',
-        json: jest.fn().mockResolvedValue({ id: 'nonexistent' })
-      };
+    it('should return 400 if id is missing', async () => {
+      const request = createRequest('PATCH', { text: 'No ID provided' });
       
-      // Call the API handler
-      const response = await PATCH(req as unknown as NextRequest);
+      const response = await PATCH(request);
+      const data = await response.json();
       
-      // Check the response
-      expect(response.body.error).toBe('Todo not found');
-      expect(response.body.status).toBe(404);
+      expect(response.status).toBe(400);
+      expect(data.status).toBe(400);
+    });
+    
+    it('should return 404 if todo is not found', async () => {
+      const request = createRequest('PATCH', { id: 'non-existent-id' });
+      
+      const response = await PATCH(request);
+      const data = await response.json();
+      
+      expect(response.status).toBe(404);
+      expect(data.status).toBe(404);
+    });
+  });
+
+  describe('DELETE /api/todos', () => {
+    it('should delete a todo', async () => {
+      // First create a todo
+      const postRequest = createRequest('POST', { text: 'Todo to delete' });
+      const postResponse = await POST(postRequest);
+      const postData = await postResponse.json();
+      const todoId = postData.data.id;
+      
+      // Then delete it
+      const deleteRequest = createRequest('DELETE', null, { id: todoId });
+      const deleteResponse = await DELETE(deleteRequest);
+      
+      expect(deleteResponse.status).toBe(204);
+      
+      // Verify it's gone
+      const getRequest = createRequest('GET');
+      const getResponse = await GET(getRequest);
+      const getData = await getResponse.json();
+      
+      expect(getData.data.find((todo: any) => todo.id === todoId)).toBeUndefined();
+    });
+    
+    it('should return 400 if id is missing', async () => {
+      const request = createRequest('DELETE');
+      
+      const response = await DELETE(request);
+      const data = await response.json();
+      
+      expect(response.status).toBe(400);
+      expect(data.status).toBe(400);
+    });
+    
+    it('should return 404 if todo is not found', async () => {
+      const request = createRequest('DELETE', null, { id: 'non-existent-id' });
+      
+      const response = await DELETE(request);
+      const data = await response.json();
+      
+      expect(response.status).toBe(404);
+      expect(data.status).toBe(404);
     });
   });
 }); 

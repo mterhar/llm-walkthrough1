@@ -1,11 +1,52 @@
-# Next.js Todo App
+# Personal Dashboard
 
-## Project Description
-A simple, modern Todo application built with Next.js, React, TypeScript, and Tailwind CSS. This application demonstrates best practices for building web applications using the latest technologies.
+Web application with widgets for weather, tasks, news, and motivational quotes.
 
-## Features
-- Create, read, update, and delete todo items
-- Mark todos as complete
+## Personal Dashboard Functionality Checklist
+
+Core Functionality
+
+[x] Customizable widget layout (drag and drop)
+[x] User preference saving
+[x] Responsive design for all devices
+[x] Quick loading time
+
+Weather Widget
+
+[x] Current conditions with visual icons
+[x] Daily forecast (5-7 days)
+[x] Location detection or manual entry
+[x] Weather alerts
+
+Task Widget
+
+[x] Add/edit/delete tasks
+[x] Priority levels
+[x] Due dates and reminders
+[x] Progress tracking
+
+News Widget
+
+[x] Personalized feed based on interests
+[x] Headlines with previews
+[x] Source filtering
+[x] Save articles for later
+
+Motivational Quotes
+
+[x] Daily rotation
+[x] Save favorites
+[x] Categories (success, creativity, etc.)
+[x] Share functionality
+
+Enhancement Features
+
+[x] Dark/light mode toggle
+[x] Widget size adjustment
+[x] Data persisted by user
+[x] Simple onboarding tutorial
+
+## Approach
 - Responsive design for all screen sizes
 - Server API endpoints for todo management
 - TypeScript for type safety

@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-// import { User } from '@/lib/types';
+import { TodoItem } from '@/lib/types';
 
 // Mock data - in a real app this would be in a database
-let todos: Array<{
-  id: string;
-  text: string;
-  completed: boolean;
-  userId?: string;
-}> = [
-  { id: '1', text: 'Learn Next.js', completed: false },
-  { id: '2', text: 'Build a Todo App', completed: false },
-  { id: '3', text: 'Deploy to Vercel', completed: false },
+let todos: TodoItem[] = [
+  { id: '1', text: 'Learn Next.js', completed: false, priority: 'high' },
+  { id: '2', text: 'Build a Todo App', completed: false, priority: 'medium', dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0] },
+  { id: '3', text: 'Deploy to Vercel', completed: false, priority: 'low', dueDate: new Date(Date.now() + 172800000).toISOString().split('T')[0] },
 ];
 
 export async function GET(request: NextRequest) {
@@ -44,11 +39,14 @@ export async function POST(request: NextRequest) {
     }
     
     // Create new todo
-    const newTodo = {
+    const newTodo: TodoItem = {
       id: Date.now().toString(),
       text: body.text,
       completed: false,
-      userId: body.userId
+      userId: body.userId,
+      // Add support for priority and due date
+      ...(body.priority && { priority: body.priority }),
+      ...(body.dueDate && { dueDate: body.dueDate }),
     };
     
     // Add to "database"
@@ -116,11 +114,13 @@ export async function PATCH(request: NextRequest) {
       }, { status: 404 });
     }
     
-    // Update todo
+    // Update todo with all possible fields
     todos[todoIndex] = {
       ...todos[todoIndex],
       ...(body.text !== undefined && { text: body.text }),
       ...(body.completed !== undefined && { completed: body.completed }),
+      ...(body.priority !== undefined && { priority: body.priority }),
+      ...(body.dueDate !== undefined && { dueDate: body.dueDate }),
     };
     
     return NextResponse.json({

@@ -21,7 +21,6 @@ The application will be deployed on Vercel.
 - Use descriptive variable names with proper auxiliary verbs (e.g., isLoading, hasError)
 
 // FILE STRUCTURE
-- Put the application in the "workshop-app" folder
 - Group files by feature when possible
 - For components, use the pattern: [ComponentName]/index.tsx and [ComponentName]/[ComponentName].test.tsx
 - Place API routes in app/api/[route]/route.ts

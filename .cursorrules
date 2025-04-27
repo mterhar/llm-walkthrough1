@@ -3,7 +3,7 @@ This is a Next.js application created using "npx create-next-app@latest" with Re
 The application will be deployed on Vercel.
 
 // TECH STACK REQUIREMENTS
-- Use Node.js v23.x
+- Use Node.js v22.15 
 - Use React 19 and Next.js App Router
 - Use TypeScript for all code
 - Use Tailwind CSS for styling
